@@ -25,13 +25,13 @@ sia = SentimentIntensityAnalyzer()
 
 
 team_names = [
-    '02Angels', '03Athletics', '04Mariners', '05Astros', '06Rangers', '07Rockies', '08Padres', '09Dodgers', '10Giants', '11Diamondbacks',
+    '09Dodgers', '10Giants', '11Diamondbacks',
     '12Cardinals', '13Reds', '14Cubs', '15Pirates', '16Brewers', '17Braves', '18Mets', '19Phillies', '20Marlins', '21Nationals',
     '22Indians', '23Twins', '24Royals', '25Tigers', '26WhiteSox', '27Yankees', '28Rays', '29RedSox', '30Orioles', '31BlueJays'
 ]
 
 team_abbrevs = [
-    'ANA', 'OAK', 'SEA', 'HOU', 'TEX', 'COL', 'SDP', 'LAD', 'SFG', 'AZ', 'STL', 'CIN', 'CHC', 'PIT', 'MIL',
+    'LAD', 'SFG', 'AZ', 'STL', 'CIN', 'CHC', 'PIT', 'MIL',
     'ATL', 'NYM', 'PHI', 'FLA', 'WSN', 'CLE', 'MIN', 'KCR', 'DET', 'CHW', 'NYY', 'TBD', 'BOS', 'BAL', 'TOR'
 ]
 
