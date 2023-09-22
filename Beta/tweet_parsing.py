@@ -4,7 +4,6 @@ import fileinput
 import json
 import string
 import re
-import time
 import csv
 import geopy.distance
 import nltk
@@ -24,18 +23,18 @@ BUCKET_NAME = 'allteamsmlb' # Do not change
 sia = SentimentIntensityAnalyzer()
 
 
-team_names = [
+names = [
     '09Dodgers', '10Giants', '11Diamondbacks',
     '12Cardinals', '13Reds', '14Cubs', '15Pirates', '16Brewers', '17Braves', '18Mets', '19Phillies', '20Marlins', '21Nationals',
     '22Indians', '23Twins', '24Royals', '25Tigers', '26WhiteSox', '27Yankees', '28Rays', '29RedSox', '30Orioles', '31BlueJays'
 ]
 
-team_abbrevs = [
+abbrevs = [
     'LAD', 'SFG', 'AZ', 'STL', 'CIN', 'CHC', 'PIT', 'MIL',
     'ATL', 'NYM', 'PHI', 'FLA', 'WSN', 'CLE', 'MIN', 'KCR', 'DET', 'CHW', 'NYY', 'TBD', 'BOS', 'BAL', 'TOR'
 ]
 
-team_lats = {
+city_lats = {
     'ANA': 33.800031, 'OAK': 37.751614, 'SEA': 47.591217, 'HOU': 29.757224, 'TEX': 32.751207,
     'COL': 39.755878, 'SDP': 32.707206, 'LAD': 34.07358, 'SFG': 37.778361, 'AZ': 33.445498,
     'STL': 38.62248, 'CIN': 39.097392, 'CHC': 41.948036, 'PIT': 40.446993, 'MIL': 43.02834,
@@ -44,7 +43,7 @@ team_lats = {
     'NYY': 40.829519, 'TBD': 27.768214, 'BOS': 42.346361, 'BAL': 39.283658, 'TOR': 43.641684
 }
 
-team_longs = {
+city_longs = {
     'ANA': -117.883017, 'OAK': -122.200574, 'SEA': -122.332721, 'HOU': -95.35521, 'TEX': -97.082635,
     'COL': -104.994192, 'SDP': -117.15706, 'LAD': -118.240147, 'SFG': -122.389712, 'AZ': -112.066694,
     'STL': -90.193205, 'CIN': -84.506852, 'CHC': -87.65569, 'PIT': -80.005987, 'MIL': -87.971451,
@@ -57,27 +56,6 @@ super_list = [
     ['NOUN', 'VERB', 'ADV'], ['NOUN', 'VERB', 'ADP'], ['NOUN', 'VERB', 'ADV', 'ADJ'],
     ['NOUN', 'VERB', 'NOUN', 'ADP'], ['NOUN', 'VERB', 'ADJ'], ['NOUN', 'VERB', 'ADJ', 'NOUN']
 ]
-
-emoticons_happy = [
-    ':-)', ':)', ';)', ':o)', ':]', ':c)', '=]', '=)', ':^)', ':D', 'xD', 'XD',
-    '=-D', '=D', ':-))', ":'-)", ":')", '>:)', '>;)', '>:-)', '<3', '☺️', '😚',
-    '😙', '😋', '😛', '😜', '😝', '🤗', '😏', '😌', '🥳', '😎', '😺', '😸', '😹', '😻',
-    '😼', '😽', '👍', '👏', '🙌', '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂',
-    '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '🎉', '🎊', '💘', '💝', '💖', '💗', '💓',
-    '💞', '💕', '💟', '❣️', '❤️‍🔥', '❤️', '🧡', '💛', '💚', '💙', '💜', '🤎',
-    '🖤', '🤍', '💯'
-    ]
-
-# Sad Emoticons
-emoticons_sad = [
-    ':-/', '>:/', '>:[', ':-(', ':[', ':-||', ':-[', ':-<', '=\\', '=/', '>:(',
-    ':(', '>.<', ":'-(", ":'(", ':\\', ':-c', ':c', '>:\\', ';(', '😒', '😔', '🤢',
-    '🤮', '🤧', '🥴', '😕', '😟', '🙁', '☹️', '😦', '😧', '😨', '😰', '😥', '😢',
-    '😭', '😱', '😖', '😣', '😞', '😓', '😩', '😫', '😤', '😡', '😠', '🤬', '👿', '😿',
-    '😾', '🖕', '👎', '🙍', '🙍‍♂️', '🙍‍♀️', '🙎', '🙎‍♂️', '🙎‍♀️', '🤦', '🤦‍♂️',
-    '🤦‍♀️', '💔', '💢'
-    ]
-
 
 def clean_tweet(tweet):
     # remove stock market tickers like $GE
@@ -95,34 +73,9 @@ def clean_tweet(tweet):
     return tweet
 
 
-# intervals = (
-#     ('weeks', 604800),  # 60 * 60 * 24 * 7
-#     ('days', 86400),  # 60 * 60 * 24
-#     ('hours', 3600),  # 60 * 60
-#     ('minutes', 60),
-#     ('seconds', 1),
-# )
-
-# Displays time in descending fashion
-# def display_time(seconds, granularity=2):
-#     result = []
-
-#     for name, count in intervals:
-#         value = seconds // count
-#         if value:
-#             seconds -= value * count
-#             if value == 1:
-#                 name = name.rstrip('s')
-#             result.append("{} {}".format(round(value), name))
-#     return ', '.join(result[:granularity])
-
-
 # If dict is empty, initialize. Otherwise, increment
 def increment_dict(key, dictionary):
-    if key in dictionary.keys():
-        dictionary[key] += 1
-    else:
-        dictionary[key] = 1
+    dictionary[key] = dictionary.get(key, 0) + 1
 
 
 def write_dict_to_file(file_name, dictionary):
@@ -132,17 +85,15 @@ def write_dict_to_file(file_name, dictionary):
 
             
 def main():
-    # # Start runtime
-    # t0 = time.time()
-    
+
     # ALL TEAMS DICTS
     ALL_TEAMS_bow = {}
     ALL_TEAMS_total_tweets = {}
     
     
-    for team_name in team_names:
+    for team_name in names:
 
-        team_abbrev = team_abbrevs[team_names.index(team_name)]
+        team_abbrev = abbrevs[names.index(team_name)]
 
         dates = []
 
@@ -191,10 +142,6 @@ def main():
         IP_yes_cognition = {}
         IP_no_cognition = {}
 
-        IP_happy_sentiment = {}
-        IP_sad_sentiment = {}
-        IP_general_sentiment = {}
-
 
         # DICTS FOR TEAM IS NOT PLAYING
         
@@ -212,20 +159,10 @@ def main():
         NP_yes_cognition = {}
         NP_no_cognition = {}
 
-        NP_happy_sentiment = {}
-        NP_sad_sentiment = {}
-        NP_general_sentiment = {}
-
         
         object_generator = storage_client.list_blobs(BUCKET_NAME, prefix=team_name, delimiter=None)
 
         for status_log_bucket_name in object_generator:
-
-            # # TODO: Delete me
-            # previous_parse_time = time.time()
-            # bucket_time = time.time()
-            # if bucket_time - t0 > .2:
-            #     break
 
             client = storage.Client()
             BUCKET_NAME_TWO = client.bucket(BUCKET_NAME)
@@ -234,11 +171,6 @@ def main():
             with blob.open('rt') as f:
                 for line in f:
                     try:
-#                        # TODO: Delete me
-#                        start_parse_time = time.time()
-#                        print('\nTWEET ACCESS TIME  - ', start_parse_time - previous_parse_time, '\n')
-#                        previous_parse_time = time.time()
-
                         raw_tweet = json.loads(line)
 
                         tweet = Tweet(raw_tweet)
@@ -271,8 +203,8 @@ def main():
 
                             tweet_coords = (tweet_lat, tweet_long)
 
-                            team_lat = team_lats[team_abbrev]
-                            team_long = team_longs[team_abbrev]
+                            team_lat = city_lats[team_abbrev]
+                            team_long = city_longs[team_abbrev]
 
                             team_coords = (team_lat, team_long)
 
@@ -364,24 +296,6 @@ def main():
                             else:
                                 increment_dict(date, IP_no_cognition)
 
-                                
-                            # !! SENTIMENT !!
-
-                            # If in happy emoticons, add to dict
-                            for emoticon in emoticons_happy:
-                                if text.lower().find(emoticon) != -1:
-                                    increment_dict(date, IP_happy_sentiment)
-                                    increment_dict(date, IP_general_sentiment)
-                                    break;
-
-                            # If in sad emoticons, add to dict
-                            for emoticon in emoticons_sad:
-                                if text.lower().find(emoticon) != -1:
-                                    increment_dict(date, IP_sad_sentiment)
-                                    increment_dict(date, IP_general_sentiment)
-                                    break;
-
-                                    
 
                         # If the team is NOT playing
                         
@@ -458,39 +372,6 @@ def main():
                             else:
                                 increment_dict(date, NP_no_cognition)
 
-                                
-                            # !! SENTIMENT !!
-
-                            # If in happy emoticons, add to dict
-                            for emoticon in emoticons_happy:
-                                if text.lower().find(emoticon) != -1:
-                                    increment_dict(date, NP_happy_sentiment)
-                                    increment_dict(date, NP_general_sentiment)
-                                    break;
-
-                            # If in sad emoticons, add to dict
-                            for emoticon in emoticons_sad:
-                                if text.lower().find(emoticon) != -1:
-                                    increment_dict(date, NP_sad_sentiment)
-                                    increment_dict(date, NP_general_sentiment)
-                                    break;
-
-
-                        # # TODO: Delete me
-                        # end_parse_time = time.time()
-                        # print('\nTWEET PARSING TIME  - ', end_parse_time - start_parse_time, '\n')    
-
-#                         print('\nText:', text)
-#                         print('Words:', words)
-#                         print('Date:', date)
-#                         print('Hour:', hour)
-#                         if coordinates is not None and coordinates['latitude'] is not None and coordinates['longitude'] is not None:
-#                             print('Coordinates:', coordinates)
-#                             print('Distance:', distance)
-#                         print('\n\n')
-
-
-
                     except Exception as e:
                         # print(str(e))
                         pass
@@ -523,11 +404,6 @@ def main():
         write_dict_to_file(team_abbrev + '_IP_cogn_yes.txt', IP_yes_cognition)
         write_dict_to_file(team_abbrev + '_IP_cogn_no.txt', IP_no_cognition)
 
-        # Write to sentiment text files
-        write_dict_to_file(team_abbrev + '_IP_sent_happy.txt', IP_happy_sentiment)
-        write_dict_to_file(team_abbrev + '_IP_sent_sad.txt', IP_sad_sentiment)
-        write_dict_to_file(team_abbrev + '_IP_sent_general.txt', IP_general_sentiment)
-
         
         # TEAM NOT PLAYING:
 
@@ -550,15 +426,6 @@ def main():
         write_dict_to_file(team_abbrev + '_NP_cogn_yes.txt', NP_yes_cognition)
         write_dict_to_file(team_abbrev + '_NP_cogn_no.txt', NP_no_cognition)
 
-        # Write to sentiment text files
-        write_dict_to_file(team_abbrev + '_NP_sent_happy.txt', NP_happy_sentiment)
-        write_dict_to_file(team_abbrev + '_NP_sent_sad.txt', NP_sad_sentiment)
-        write_dict_to_file(team_abbrev + '_NP_sent_general.txt', NP_general_sentiment)
-
-        # t1 = time.time()
-
-        # print(team_name, 'DONE: Runtime  - ', display_time(t1 - t0))
-
 
     # ALL TEAMS
 
@@ -566,10 +433,6 @@ def main():
     write_dict_to_file('ALL_TEAMS_bow.txt', ALL_TEAMS_bow)
     write_dict_to_file('ALL_TEAMS_total_tweets.txt', ALL_TEAMS_total_tweets)
 
-
-    # t_final = time.time()
-
-    # print('\nTOTAL RUNTIME  - ', display_time(t_final - t0), '\n')
     print('El Fin')
 
 if __name__ == '__main__':
