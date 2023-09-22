@@ -16,9 +16,9 @@ from nltk.sentiment import SentimentIntensityAnalyzer
 from google.cloud import storage
 
 # Create bucket client and authenticate via service account access key
-storage_client = storage.Client.from_service_account_json('/srv/Twitter2030/Data/acts-cloud-5-tljh-8e85a08eab1d-sakey.json')
+storage_client = storage.Client.from_service_account_json('')
 
-BUCKET_NAME = 'allteamsmlb' # Do not change
+BUCKET_NAME = '' # Do not change
 
 sia = SentimentIntensityAnalyzer()
 
